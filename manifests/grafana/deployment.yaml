@@ -38,6 +38,19 @@ spec:
           # does not really work, because of template variables in exported dashboards:
           # - name: GF_DASHBOARDS_JSON_ENABLED
           #   value: "true"
+          - name: GF_SMTP_ENABLED
+            value: "true"
+          - name: GF_SMTP_FROM_ADDRESS
+            value: "noreply+grafana@qwil.co"
+          - name: GF_SMTP_HOST
+            value: "smtp.sendgrid.net"
+          - name: GF_SMTP_USER
+            value: "apikey"
+          - name: GF_SMTP_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: grafana-secret
+                key: email-password
         readinessProbe:
           httpGet:
             path: /login
@@ -47,6 +60,44 @@ spec:
         volumeMounts:
         - name: grafana-persistent-storage
           mountPath: /var
+      - name: ssl-proxy
+        env:
+        - name: ENABLE_SSL
+          value: "true"
+        - name: TARGET_SERVICE
+          value: localhost:3000
+        image: us.gcr.io/qwil-build/ssl-proxy:3.1.0
+        ports:
+        - containerPort: 443
+          name: https
+          protocol: TCP
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /etc/secrets/
+          name: certificates
+          readOnly: true
+        - mountPath: /etc/dhparam/
+          name: dhparam
+          readOnly: true
       volumes:
       - name: grafana-persistent-storage
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: grafana-storage
+      - name: certificates
+        secret:
+          defaultMode: 420
+          items:
+          - key: tls.key
+            path: proxykey
+          - key: tls.crt
+            path: proxycert
+          secretName: star.builds.qwil.co
+      - name: dhparam
+        secret:
+          defaultMode: 420
+          items:
+          - key: dhparam.pem
+            path: dhparam
+          secretName: dhparam

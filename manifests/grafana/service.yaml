@@ -6,10 +6,17 @@ metadata:
   labels:
     app: grafana
     component: core
+  annotations:
+    qwil.co/dns-name: "grafana.builds.qwil.co"
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
-    - port: 3000
+  - name: https
+    port: 443
+    protocol: TCP
+  - name: http
+    port: 80
+    protocol: TCP
   selector:
     app: grafana
     component: core
