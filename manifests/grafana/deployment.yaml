@@ -46,6 +46,10 @@ spec:
             value: "smtp.sendgrid.net"
           - name: GF_SMTP_USER
             value: "apikey"
+          - name: GF_SERVER_HTTP_HOST
+            value: "8000"
+          - name: GF_SERVER_HOSTNAME
+            value: "grafana.bulds.qwil.co"
           - name: GF_SMTP_PASSWORD
             valueFrom:
               secretKeyRef:
@@ -54,16 +58,13 @@ spec:
         readinessProbe:
           httpGet:
             path: /login
-            port: 3000
+            port: 8000
           # initialDelaySeconds: 30
           # timeoutSeconds: 1
         volumeMounts:
         - name: grafana-persistent-storage
           mountPath: /var
       - name: ssl-proxy
-        env:
-        - name: TARGET_SERVICE
-          value: localhost:3000
         image: us.gcr.io/qwil-build/ssl-proxy:latest
         ports:
         - containerPort: 443
